@@ -1,8 +1,0 @@
-﻿sheet,field,row,status,severity,message,original_value,corrected_value,suggestion
-BPLS-Business,sec_no,2,FAIL,ERROR,Field 'sec_no' is required but empty,,,
-BPLS-Business,incharge_middle_name,2,FAIL,ERROR,String length 2 is less than minimum 3,L.,,Ensure value has at least 3 characters
-BPLS-Business,dti_registratrion_expiry_date,2,FAIL,ERROR,Field 'dti_registratrion_expiry_date' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_registratrion_expiry_date'
-BPLS-Business,dti_no,3,FAIL,ERROR,Field 'dti_no' is required but empty,,,
-BPLS-Business,incharge_middle_name,3,FAIL,ERROR,String length 2 is less than minimum 3,L.,,Ensure value has at least 3 characters
-BPLS-Business,dti_no,3,FAIL,ERROR,Field 'dti_no' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_no'
-BPLS-Business,dti_registratrion_expiry_date,3,FAIL,ERROR,Field 'dti_registratrion_expiry_date' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_registratrion_expiry_date'

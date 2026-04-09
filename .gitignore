@@ -1,0 +1,23 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ruff_cache/
+
+# Output directories
+validated/
+bpls_csv_generator/outputs/
+bpls_csv_generator/uploads/
+
+# Test files
+test_*.csv
+test_*.xlsx
+test_*.json
+
+# Temporary files
+~$*
+
+# OS files
+.DS_Store
+Thumbs.db
