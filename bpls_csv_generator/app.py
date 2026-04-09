@@ -3,10 +3,19 @@ BPLS CSV Generator - Flask Web Application (Enhanced with 24 features)
 """
 
 import os
+import sys
 import json
 import time
+import math
+import io
+
+# Set stdout to UTF-8 to handle emojis in print statements
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, make_response
 from werkzeug.utils import secure_filename
 
 from generators.csv_generator import BPLSCSVGenerator
@@ -27,6 +36,41 @@ from generators.plugin_system import PluginRegistry
 from generators.config_profiles import ProfileManager
 from generators.pdf_report_generator import PDFReportGenerator
 
+
+def _sanitize_nan(obj):
+    """Recursively replace NaN/Infinity/numpy types with JSON-safe values."""
+    # Handle numpy/pandas types
+    try:
+        import numpy as np
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            val = float(obj)
+            if math.isnan(val) or math.isinf(val):
+                return None
+            return val
+        if isinstance(obj, np.ndarray):
+            return _sanitize_nan(obj.tolist())
+    except ImportError:
+        pass
+
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    if isinstance(obj, dict):
+        return {k: _sanitize_nan(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_nan(item) for item in obj]
+    return obj
+
+
+def safe_jsonify(data, status_code=200):
+    """Jsonify with NaN/Infinity sanitization."""
+    from flask import jsonify, make_response
+    clean_data = _sanitize_nan(data)
+    resp = make_response(jsonify(clean_data))
+    resp.status_code = status_code
+    return resp
+
 # Initialize Flask app
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB max upload
@@ -37,6 +81,21 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["OUTPUT_FOLDER"], exist_ok=True)
 
 ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv"}
+
+
+@app.after_request
+def sanitize_json_response(response):
+    """Sanitize NaN/Infinity values in JSON responses to prevent JSON parse errors."""
+    if response.content_type and "application/json" in response.content_type:
+        try:
+            import json as _json
+            data = response.get_json(silent=True)
+            if data is not None:
+                clean_data = _sanitize_nan(data)
+                response.set_data(_json.dumps(clean_data))
+        except Exception:
+            pass  # Fall through — don't break responses
+    return response
 
 # Initialize services
 template_gen = TemplateGenerator(app.config["OUTPUT_FOLDER"])
@@ -591,6 +650,172 @@ def status():
             "before_after_preview",
         ],
     })
+
+
+# ============================================================
+# Comparison Editor
+# ============================================================
+
+@app.route("/api/comparison/<sheet_name>")
+def get_comparison_data(sheet_name):
+    """Return per-row comparison data with original vs corrected values and validation details."""
+    from urllib.parse import unquote
+    sheet_name = unquote(sheet_name)
+    
+    try:
+        # Read the uploaded file data
+        upload_files = [f for f in os.listdir(app.config["UPLOAD_FOLDER"]) if f.endswith((".xlsx", ".xls", ".csv"))]
+        if not upload_files:
+            return jsonify({"success": False, "error": "No uploaded file found"}), 404
+        
+        latest_file = max(upload_files, key=lambda f: os.path.getmtime(os.path.join(app.config["UPLOAD_FOLDER"], f)))
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], latest_file)
+        
+        # Read sheet data
+        import pandas as pd
+        file_ext = latest_file.rsplit(".", 1)[1].lower()
+        
+        if file_ext == "csv":
+            df = pd.read_csv(filepath, encoding="utf-8-sig")
+        else:
+            # Find the sheet name that matches
+            xl = pd.ExcelFile(filepath)
+            sheet_match = None
+            for s in xl.sheet_names:
+                if sheet_name.lower() in s.lower() or s.lower() in sheet_name.lower():
+                    sheet_match = s
+                    break
+            if not sheet_match:
+                return jsonify({"success": False, "error": f"Sheet '{sheet_name}' not found in file"}), 404
+            df = pd.read_excel(filepath, sheet_name=sheet_match)
+        
+        # Replace NaN with None
+        df = df.where(pd.notnull(df), None)
+        rows = df.to_dict("records")
+        
+        # Read validation errors for this sheet
+        errors_path = os.path.join(app.config["OUTPUT_FOLDER"], "validation_errors.csv")
+        sheet_errors = []
+        if os.path.exists(errors_path):
+            errors_df = pd.read_csv(errors_path, encoding="utf-8-sig")
+            errors_df = errors_df.where(pd.notnull(errors_df), None)
+            sheet_errors = errors_df[errors_df["sheet"] == sheet_name].to_dict("records")
+        
+        # Read transformation log for this sheet
+        trans_path = os.path.join(app.config["OUTPUT_FOLDER"], "transformation_log.csv")
+        sheet_transforms = []
+        if os.path.exists(trans_path):
+            trans_df = pd.read_csv(trans_path, encoding="utf-8-sig")
+            trans_df = trans_df.where(pd.notnull(trans_df), None)
+            sheet_transforms = trans_df[trans_df["sheet"] == sheet_name].to_dict("records")
+        
+        # Build per-row comparison data
+        from config.schema import SHEET_SCHEMAS
+        schema = SHEET_SCHEMAS.get(sheet_name, {})
+        
+        comparison_data = []
+        for idx, row in enumerate(rows):
+            row_num = idx + 2  # Excel row number (1-based, +1 for header)
+            
+            # Find errors for this row
+            row_errors = [e for e in sheet_errors if int(e.get("row", 0)) == row_num]
+            
+            # Find transforms for this row
+            row_transforms = [t for t in sheet_transforms if int(t.get("row", 0)) == row_num]
+            
+            # Build field details
+            field_details = {}
+            for field_name in row.keys():
+                original_val = row.get(field_name)
+                
+                # Check if this field was transformed
+                corrected_val = original_val
+                for t in row_transforms:
+                    if t.get("field") == field_name:
+                        corrected_val = t.get("cleaned")
+                        break
+                
+                # Check if this field has errors
+                field_errors = [e for e in row_errors if e.get("field") == field_name]
+                
+                # Get field schema info
+                field_schema = schema.get(field_name, {})
+                
+                field_details[field_name] = {
+                    "original": original_val,
+                    "corrected": corrected_val,
+                    "has_error": len(field_errors) > 0,
+                    "has_transform": original_val != corrected_val,
+                    "errors": field_errors,
+                    "schema": {
+                        "type": str(field_schema.field_type.value) if hasattr(field_schema, 'field_type') else "unknown",
+                        "required": str(field_schema.required.value) if hasattr(field_schema, 'required') else "NO",
+                    }
+                }
+            
+            comparison_data.append({
+                "row_num": row_num,
+                "fields": field_details,
+                "error_count": len(row_errors),
+                "transform_count": len(row_transforms)
+            })
+        
+        return jsonify({
+            "success": True,
+            "sheet_name": sheet_name,
+            "total_rows": len(comparison_data),
+            "rows": comparison_data,
+            "schema_fields": {name: {
+                "type": str(defn.field_type.value) if hasattr(defn, 'field_type') else "unknown",
+                "required": str(defn.required.value) if hasattr(defn, 'required') else "NO",
+            } for name, defn in schema.items()}
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/comparison/save", methods=["POST"])
+def save_comparison_edits():
+    """Save edited comparison data back to CSV."""
+    try:
+        data = request.get_json()
+        sheet_name = data.get("sheet_name")
+        edited_rows = data.get("rows", [])
+        
+        if not sheet_name or not edited_rows:
+            return jsonify({"success": False, "error": "Missing sheet_name or rows"}), 400
+        
+        # Build cleaned data from edited rows
+        cleaned_data = []
+        for row_data in edited_rows:
+            row = {}
+            for field_name, field_data in row_data.get("fields", {}).items():
+                row[field_name] = field_data.get("corrected") or field_data.get("original")
+            cleaned_data.append(row)
+        
+        # Write to CSV
+        from config.schema import SHEET_SCHEMAS
+        schema = SHEET_SCHEMAS.get(sheet_name, {})
+        fieldnames = list(schema.keys()) if schema else list(cleaned_data[0].keys()) if cleaned_data else []
+        
+        safe_name = sheet_name.replace(" ", "_").replace("/", "_")
+        output_path = os.path.join(app.config["OUTPUT_FOLDER"], f"{safe_name}_edited.csv")
+        
+        import csv
+        with open(output_path, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(cleaned_data)
+        
+        return jsonify({
+            "success": True,
+            "output_path": f"/api/download/{os.path.basename(output_path)}",
+            "rows_saved": len(cleaned_data)
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 ﻿sheet,field,row,status,severity,message,original_value,corrected_value,suggestion
-BPLS-Business,trade_name,2,FAIL,ERROR,Field 'trade_name' is required but empty,,,
 BPLS-Business,sec_no,2,FAIL,ERROR,Field 'sec_no' is required but empty,,,
-BPLS-Business,cda_no,2,FAIL,ERROR,Field 'cda_no' is required but empty,,,
 BPLS-Business,incharge_middle_name,2,FAIL,ERROR,String length 2 is less than minimum 3,L.,,Ensure value has at least 3 characters
-BPLS-Business,incharge_extension_name,2,FAIL,ERROR,Field 'incharge_extension_name' is required but empty,,,
-BPLS-Business,office_street,2,FAIL,ERROR,Field 'office_street' is required but empty,,,
-BPLS-Business,pin_no,2,FAIL,ERROR,Field 'pin_no' is required but empty,,,
+BPLS-Business,dti_registratrion_expiry_date,2,FAIL,ERROR,Field 'dti_registratrion_expiry_date' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_registratrion_expiry_date'
+BPLS-Business,dti_no,3,FAIL,ERROR,Field 'dti_no' is required but empty,,,
+BPLS-Business,incharge_middle_name,3,FAIL,ERROR,String length 2 is less than minimum 3,L.,,Ensure value has at least 3 characters
+BPLS-Business,dti_no,3,FAIL,ERROR,Field 'dti_no' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_no'
+BPLS-Business,dti_registratrion_expiry_date,3,FAIL,ERROR,Field 'dti_registratrion_expiry_date' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_registratrion_expiry_date'

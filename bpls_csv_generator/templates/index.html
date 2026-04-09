@@ -351,6 +351,460 @@ td { padding: 8px 12px; border-top: 1px solid var(--border-color); font-size: 0.
     .tool-grid { grid-template-columns: 1fr; }
     .top-bar { padding: 0.5rem 1rem; }
 }
+
+/* ===== Full-Screen Comparison Editor ===== */
+.comparison-editor-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.editor-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.editor-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.editor-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.editor-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+}
+
+.editor-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.editor-stat-value {
+    font-weight: 600;
+}
+
+.editor-stat-value.error { color: var(--error); }
+.editor-stat-value.transform { color: var(--warning); }
+.editor-stat-value.clean { color: var(--success); }
+
+.editor-body {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+}
+
+.editor-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+}
+
+.editor-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 1200px;
+}
+
+.editor-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-primary);
+}
+
+.editor-table th {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
+
+.editor-table th.row-header {
+    min-width: 60px;
+    width: 60px;
+}
+
+.editor-table th.field-header {
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.editor-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
+}
+
+.editor-table tr:hover td {
+    background: var(--bg-primary);
+}
+
+/* Row number column */
+.row-num-cell {
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    min-width: 60px;
+    width: 60px;
+}
+
+/* Field cell with side-by-side comparison */
+.field-cell {
+    min-width: 180px;
+    max-width: 300px;
+}
+
+.field-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.field-original, .field-corrected {
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+    word-break: break-word;
+}
+
+.field-original {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.field-corrected {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+[data-theme="dark"] .field-original {
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .field-corrected {
+    background: #052e16;
+    border-color: #166534;
+    color: #86efac;
+}
+
+/* Violation styling */
+.field-cell.has-error .field-original {
+    background: #fee2e2;
+    border-color: #ef4444;
+    border-width: 2px;
+}
+
+.field-cell.has-error {
+    position: relative;
+}
+
+.field-cell.has-error::after {
+    content: '⚠️';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.9rem;
+}
+
+/* Transform indicator */
+.field-cell.has-transform .field-corrected {
+    border-style: dashed;
+}
+
+/* Inline editing */
+.field-edit-input {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 2px solid var(--primary);
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Error guidance tooltip */
+.error-guidance {
+    margin-top: 0.35rem;
+    padding: 0.4rem 0.6rem;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #991b1b;
+    line-height: 1.4;
+}
+
+[data-theme="dark"] .error-guidance {
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+.error-guidance-title {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.error-guidance-rule {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+}
+
+[data-theme="dark"] .error-guidance-rule {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Field header info */
+.field-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.field-name {
+    font-weight: 600;
+}
+
+.field-type-badge {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    display: inline-block;
+}
+
+.field-required-badge {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    background: #fef3c7;
+    color: #92400e;
+    display: inline-block;
+}
+
+[data-theme="dark"] .field-required-badge {
+    background: #78350f;
+    color: #fde68a;
+}
+
+/* Editor action buttons */
+.editor-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.editor-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.editor-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.editor-btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.editor-btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.editor-btn-secondary:hover {
+    background: var(--border-color);
+}
+
+.editor-btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.editor-btn-success:hover {
+    background: #16a34a;
+}
+
+/* Row highlight for errors */
+.editor-table tr.has-errors {
+    background: #fef2f2;
+}
+
+.editor-table tr.has-errors:hover {
+    background: #fee2e2;
+}
+
+[data-theme="dark"] .editor-table tr.has-errors {
+    background: #450a0a;
+}
+
+[data-theme="dark"] .editor-table tr.has-errors:hover {
+    background: #7f1d1d;
+}
+
+/* Filter bar */
+.editor-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.filter-select, .filter-input {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.filter-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* Accept/Reject buttons per row */
+.row-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.row-action-btn {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.row-action-btn:hover {
+    background: var(--border-color);
+}
+
+.row-action-btn.accept {
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.row-action-btn.accept:hover {
+    background: #f0fdf4;
+}
+
+.row-action-btn.reject {
+    border-color: var(--error);
+    color: var(--error);
+}
+
+.row-action-btn.reject:hover {
+    background: #fef2f2;
+}
+
+/* Loading state */
+.editor-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 1rem;
+}
+
+.editor-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.editor-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 1rem;
+    color: var(--text-muted);
+}
+
+.editor-empty-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+}
     </style>
 </head>
 <body>
@@ -376,6 +830,7 @@ td { padding: 8px 12px; border-top: 1px solid var(--border-color); font-size: 0.
         <!-- Tabs -->
         <div class="tabs" role="tablist">
             <button class="tab-btn active" data-tab="upload" data-i18n="tabUpload">⬆️ Upload</button>
+            <button class="tab-btn" data-tab="editor" data-i18n="tabEditor">📝 Comparison Editor</button>
             <button class="tab-btn" data-tab="templates" data-i18n="tabTemplates">📄 Templates</button>
             <button class="tab-btn" data-tab="mapping" data-i18n="tabMapping">🔗 Column Map</button>
             <button class="tab-btn" data-tab="diff" data-i18n="tabDiff">🔀 Compare</button>
@@ -485,6 +940,30 @@ td { padding: 8px 12px; border-top: 1px solid var(--border-color); font-size: 0.
                     <button class="retry-btn" id="retryBtn" data-i18n="retryBtn">Try Again</button>
                 </div>
             </section>
+        </div>
+
+        <!-- TAB: Comparison Editor -->
+        <div class="tab-content" id="tab-editor">
+            <div class="tool-card">
+                <h3>📝 <span data-i18n="editorTitle">Side-by-Side Comparison Editor</span></h3>
+                <p data-i18n="editorDesc">Review original vs corrected values, fix violations inline, and export clean data. Violated fields are highlighted in red with guidance on how to fix them.</p>
+                
+                <div id="editorSheetSelector" style="margin: 1rem 0;">
+                    <label style="font-weight: 600; margin-right: 0.5rem;">Select Sheet:</label>
+                    <select id="editorSheetSelect" class="input-field" style="max-width: 300px; display: inline-block;">
+                        <option value="">-- Choose a sheet --</option>
+                        <option value="BPLS-Business">BPLS-Business</option>
+                        <option value="BPLS-Business Activity">BPLS-Business Activity</option>
+                        <option value="BPLS-Application">BPLS-Application</option>
+                        <option value="BPLS-Application Fee">BPLS-Application Fee</option>
+                    </select>
+                    <button id="loadEditorBtn" class="btn btn-primary btn-sm" style="margin-left: 0.75rem;">Load Editor</button>
+                </div>
+
+                <div id="editorStatus" style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; margin-top: 1rem; display: none;">
+                    <p style="color: var(--text-secondary);">Loading editor...</p>
+                </div>
+            </div>
         </div>
 
         <!-- TAB: Templates -->

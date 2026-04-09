@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-04-07T13:12:05.461004",
+  "timestamp": "2026-04-09T20:08:42.638023",
   "sheets": {
     "BPLS-Business": {
-      "total_validations": 41,
+      "total_validations": 70,
       "errors": 7,
       "warnings": 0,
-      "auto_corrected": 1,
-      "passed": 33
+      "auto_corrected": 0,
+      "passed": 63
     }
   }
 }

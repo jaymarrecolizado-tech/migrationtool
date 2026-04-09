@@ -40,15 +40,17 @@ class SummaryStatistics:
             try:
                 nums = [float(v) for v in values if v is not None]
                 if nums:
+                    total = sum(nums)
+                    count = len(nums)
                     numeric_stats[key] = {
-                        "count": len(nums),
+                        "count": count,
                         "min": min(nums),
                         "max": max(nums),
-                        "sum": sum(nums),
-                        "mean": sum(nums) / len(nums),
+                        "sum": total,
+                        "mean": round(total / count, 2) if count > 0 else 0,
                     }
                     continue
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, ZeroDivisionError):
                 pass
 
             # Categorical (enum-like)
