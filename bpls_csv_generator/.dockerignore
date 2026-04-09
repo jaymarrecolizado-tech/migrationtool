@@ -1,0 +1,16 @@
+*.pyc
+__pycache__/
+*.pyc
+.git
+.gitignore
+uploads/*
+outputs/*
+!outputs/.gitkeep
+reports/*
+!reports/.gitkeep
+test_outputs/
+migration_outputs/
+foolproof_outputs/
+*.xlsx
+*.csv
+!requirements.txt

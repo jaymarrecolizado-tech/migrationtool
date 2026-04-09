@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPLS CSV Format Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* ===== CSS Custom Properties ===== */
+:root {
+    --bg-primary: #f9fafb;
+    --bg-secondary: #ffffff;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border-color: #e5e7eb;
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: all 0.2s ease;
+}
+
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #6b7280;
+    --border-color: #374151;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.4);
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: var(--transition);
+}
+
+/* ===== Top Bar ===== */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 2rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.top-bar-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+.icon-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+.icon-btn:hover { background: var(--bg-primary); }
+
+/* ===== Layout ===== */
+.container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+.header {
+    background: var(--bg-gradient);
+    color: white;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+.header h1 { font-size: 1.8rem; font-weight: 700; }
+.header .subtitle { opacity: 0.9; margin-top: 0.25rem; }
+
+/* ===== Tabs ===== */
+.tabs {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+}
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: var(--transition);
+}
+.tab-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+.tab-btn.active { background: var(--primary); color: white; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== Upload ===== */
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius);
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--bg-secondary);
+    transition: var(--transition);
+    cursor: pointer;
+}
+.upload-area:hover, .upload-area.drag-over {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.05);
+}
+.upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+.upload-area h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+.upload-hint { color: var(--text-muted); margin: 0.5rem 0; }
+.file-input { display: none; }
+.browse-btn {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    margin: 0.5rem 0;
+}
+.file-types, .csv-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+.options-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+}
+.options-panel h3 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+.checkbox-label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+.checkbox-label input { margin-top: 0.2rem; }
+.checkbox-text { display: flex; flex-direction: column; }
+.checkbox-text strong { font-size: 0.875rem; }
+.checkbox-text small { color: var(--text-muted); font-size: 0.75rem; }
+
+.process-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: var(--transition);
+}
+.process-btn:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
+.process-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Progress ===== */
+.progress-section { margin-top: 1.5rem; }
+.progress-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+}
+.spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-steps { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.progress-step {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.5rem 1rem; border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    transition: var(--transition);
+}
+.progress-step.active { background: rgba(79, 70, 229, 0.1); }
+.progress-step.done { opacity: 0.6; }
+
+/* ===== Results ===== */
+.results-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.reset-btn {
+    background: var(--bg-primary); border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-primary);
+}
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.stat-card {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+.stat-value { font-size: 1.75rem; font-weight: 700; }
+.stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+
+/* ===== File List ===== */
+.file-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.file-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+}
+.file-item a { color: var(--primary); text-decoration: none; font-weight: 500; }
+.file-item a:hover { text-decoration: underline; }
+.file-size { font-size: 0.75rem; color: var(--text-muted); }
+
+/* ===== Tables ===== */
+table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+th { background: var(--bg-primary); padding: 8px 12px; text-align: left; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
+td { padding: 8px 12px; border-top: 1px solid var(--border-color); font-size: 0.85rem; }
+
+/* ===== Badges ===== */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+[data-theme="dark"] .badge-green { background: #052e16; color: #4ade80; }
+[data-theme="dark"] .badge-red { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .badge-amber { background: #451a03; color: #fbbf24; }
+[data-theme="dark"] .badge-blue { background: #1e3a5f; color: #93c5fd; }
+
+/* ===== Before/After Table ===== */
+.before-after { width: 100%; }
+.before-after td { padding: 4px 12px; }
+.before-after .original { color: var(--error); text-decoration: line-through; }
+.before-after .cleaned { color: var(--success); font-weight: 600; }
+
+/* ===== Tool Cards ===== */
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+.tool-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: var(--transition);
+}
+.tool-card:hover { box-shadow: var(--shadow-lg); border-color: var(--primary); }
+.tool-card h3 { font-size: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+.tool-card p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem; }
+.tool-card .tool-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ===== Form Elements ===== */
+.input-group { margin-bottom: 1rem; }
+.input-group label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--text-secondary); }
+.input-group input, .input-group select, .input-group textarea {
+    width: 100%; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-outline { background: none; border: 1px solid var(--border-color); color: var(--text-primary); }
+.btn-outline:hover { background: var(--bg-primary); }
+
+/* ===== Error ===== */
+.error-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--error);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+}
+.error-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.error-message { color: var(--error); margin: 0.5rem 0 1rem; }
+.retry-btn {
+    background: var(--error); color: white; border: none;
+    padding: 0.5rem 1.5rem; border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+/* ===== Footer ===== */
+.footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 2rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .container { padding: 0.75rem; }
+    .header { padding: 1.25rem; }
+    .tabs { flex-wrap: nowrap; }
+    .summary-stats { grid-template-columns: repeat(2, 1fr); }
+    .tool-grid { grid-template-columns: 1fr; }
+    .top-bar { padding: 0.5rem 1rem; }
+}
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div style="font-weight:600; font-size:0.9rem;">BPLS CSV Generator</div>
+        <div class="top-bar-controls">
+            <select id="langSelect" class="icon-btn" style="font-size:0.8rem; padding: 0.3rem 0.5rem;">
+                <option value="en">🇬🇧 English</option>
+                <option value="fil">🇵🇭 Filipino</option>
+            </select>
+            <button id="themeToggle" class="icon-btn" title="Toggle dark mode">🌙</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 data-i18n="title">🏢 BPLS CSV Format Generator</h1>
+            <p class="subtitle" data-i18n="subtitle">Validate, clean, and transform migration data for BPLS System — 24 features enabled</p>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" data-tab="upload" data-i18n="tabUpload">⬆️ Upload</button>
+            <button class="tab-btn" data-tab="templates" data-i18n="tabTemplates">📄 Templates</button>
+            <button class="tab-btn" data-tab="mapping" data-i18n="tabMapping">🔗 Column Map</button>
+            <button class="tab-btn" data-tab="diff" data-i18n="tabDiff">🔀 Compare</button>
+            <button class="tab-btn" data-tab="batch" data-i18n="tabBatch">📦 Batch</button>
+            <button class="tab-btn" data-tab="quality" data-i18n="tabQuality">📊 Quality</button>
+            <button class="tab-btn" data-tab="tools" data-i18n="tabTools">🛠️ Tools</button>
+            <button class="tab-btn" data-tab="profiles" data-i18n="tabProfiles">⚙️ Profiles</button>
+            <button class="tab-btn" data-tab="plugins" data-i18n="tabPlugins">🧩 Plugins</button>
+        </div>
+
+        <!-- TAB: Upload -->
+        <div class="tab-content active" id="tab-upload">
+            <section class="upload-section">
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <h2 data-i18n="uploadTitle">Upload Excel or CSV File</h2>
+                    <p data-i18n="uploadDesc">Drag & drop your migration data file here</p>
+                    <p class="upload-hint" data-i18n="uploadOr">or</p>
+                    <label class="file-input-label">
+                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="file-input">
+                        <span class="browse-btn" data-i18n="browseBtn">Browse Files</span>
+                    </label>
+                    <p class="file-types">Supported: .xlsx, .xls, .csv (max 50MB)</p>
+                </div>
+                <div class="options-panel">
+                    <h3 data-i18n="optionsTitle">Processing Options</h3>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoCorrect" checked>
+                        <span class="checkbox-text">
+                            <strong data-i18n="autoCorrectLabel">Auto-Correct</strong>
+                            <small data-i18n="autoCorrectDesc">Automatically fix common data issues</small>
+                        </span>
+                    </label>
+                </div>
+                <button class="process-btn" id="processBtn" disabled>
+                    <span>⚡</span> <span data-i18n="processBtn">Process File</span>
+                </button>
+            </section>
+
+            <!-- Progress -->
+            <section class="progress-section" id="progressSection" style="display:none;">
+                <div class="progress-card">
+                    <div class="spinner"></div>
+                    <h3 data-i18n="processingTitle">Processing your file...</h3>
+                    <div class="progress-steps">
+                        <div class="progress-step" id="step1"><span>📖</span><span data-i18n="step1">Reading file</span></div>
+                        <div class="progress-step" id="step2"><span>🧹</span><span data-i18n="step2">Cleaning data</span></div>
+                        <div class="progress-step" id="step3"><span>✅</span><span data-i18n="step3">Validating</span></div>
+                        <div class="progress-step" id="step4"><span>🔍</span><span data-i18n="step4">Duplicate check</span></div>
+                        <div class="progress-step" id="step5"><span>📊</span><span data-i18n="step5">Generating reports</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results -->
+            <section class="results-section" id="resultsSection" style="display:none;">
+                <div class="results-card">
+                    <div class="results-header">
+                        <h2 data-i18n="completeTitle">✅ Processing Complete!</h2>
+                        <button class="reset-btn" id="resetBtn" data-i18n="resetBtn">Process Another</button>
+                    </div>
+                    <div class="summary-stats" id="summaryStats"></div>
+
+                    <!-- Before/After Preview -->
+                    <details style="margin-bottom:1.5rem;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.95rem;" data-i18n="beforeAfterTitle">🔄 Before/After Preview</summary>
+                        <div id="beforeAfterContent" style="margin-top:0.75rem; max-height:400px; overflow:auto;"></div>
+                    </details>
+
+                    <div class="downloads-section">
+                        <h3 data-i18n="generatedFilesTitle">📥 Generated Files</h3>
+                        <div class="file-list" id="fileList"></div>
+                    </div>
+
+                    <!-- Duplicate Report -->
+                    <details id="duplicateDetails" style="margin-top:1rem; display:none;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.95rem;" data-i18n="duplicateTitle">🔍 Duplicate Detection Report</summary>
+                        <div id="duplicateContent" style="margin-top:0.75rem;"></div>
+                    </details>
+
+                    <!-- Cross-Row Issues -->
+                    <details id="crossRowDetails" style="margin-top:1rem; display:none;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.95rem;" data-i18n="crossRowTitle">⚠️ Cross-Row Validation Issues</summary>
+                        <div id="crossRowContent" style="margin-top:0.75rem;"></div>
+                    </details>
+
+                    <!-- Email/Phone Issues -->
+                    <details id="contactDetails" style="margin-top:1rem; display:none;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.95rem;" data-i18n="contactTitle">📧 Email & Phone Verification</summary>
+                        <div id="contactContent" style="margin-top:0.75rem;"></div>
+                    </details>
+
+                    <!-- Sheet Validation Details -->
+                    <details open style="margin-top:1rem;">
+                        <summary style="cursor:pointer; font-weight:600; font-size:0.95rem;" data-i18n="validationDetailsTitle">📋 Validation Details by Sheet</summary>
+                        <div id="sheetResults" style="margin-top:0.75rem;"></div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- Error -->
+            <section class="error-section" id="errorSection" style="display:none;">
+                <div class="error-card">
+                    <div class="error-icon">❌</div>
+                    <h3 data-i18n="errorTitle">Processing Error</h3>
+                    <p class="error-message" id="errorMessage"></p>
+                    <button class="retry-btn" id="retryBtn" data-i18n="retryBtn">Try Again</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB: Templates -->
+        <div class="tab-content" id="tab-templates">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>📄 <span data-i18n="tplTitle">Generate Excel Templates</span></h3>
+                <p data-i18n="tplDesc">Generate blank Excel templates with proper headers, dropdowns, and data validation for each BPLS sheet.</p>
+                <div class="input-group">
+                    <label data-i18n="tplSheetLabel">Sheet (leave empty for all)</label>
+                    <select id="tplSheet">
+                        <option value="">All 4 sheets</option>
+                        <option value="BPLS-Business">BPLS-Business</option>
+                        <option value="BPLS-Business Activity">BPLS-Business Activity</option>
+                        <option value="BPLS-Application">BPLS-Application</option>
+                        <option value="BPLS-Application Fee">BPLS-Application Fee</option>
+                    </select>
+                </div>
+                <button class="btn-sm btn-primary" onclick="generateTemplates()" data-i18n="tplBtn">Generate Template</button>
+                <div id="tplResult" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Column Mapping -->
+        <div class="tab-content" id="tab-mapping">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>🔗 <span data-i18n="mapTitle">Column Mapping Wizard</span></h3>
+                <p data-i18n="mapDesc">Paste your source column names (one per line) to auto-detect BPLS field mappings.</p>
+                <div class="input-group">
+                    <label data-i18n="mapColumnsLabel">Source Columns (one per line)</label>
+                    <textarea id="mapColumns" rows="5" placeholder="BizName&#10;DTINumber&#10;ContactEmail&#10;Cellphone"></textarea>
+                </div>
+                <div class="input-group">
+                    <label data-i18n="mapSheetLabel">Target Sheet</label>
+                    <select id="mapSheet">
+                        <option value="BPLS-Business">BPLS-Business</option>
+                        <option value="BPLS-Business Activity">BPLS-Business Activity</option>
+                        <option value="BPLS-Application">BPLS-Application</option>
+                        <option value="BPLS-Application Fee">BPLS-Application Fee</option>
+                    </select>
+                </div>
+                <button class="btn-sm btn-primary" onclick="detectMapping()" data-i18n="mapBtn">Detect Mapping</button>
+                <div id="mapResult" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Diff -->
+        <div class="tab-content" id="tab-diff">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>🔀 <span data-i18n="diffTitle">Compare Two Files</span></h3>
+                <p data-i18n="diffDesc">Upload two migration files to see what changed between them.</p>
+                <div class="input-group">
+                    <label>File A (Original)</label>
+                    <input type="file" id="diffFileA" accept=".xlsx,.xls,.csv">
+                </div>
+                <div class="input-group">
+                    <label>File B (New)</label>
+                    <input type="file" id="diffFileB" accept=".xlsx,.xls,.csv">
+                </div>
+                <button class="btn-sm btn-primary" onclick="compareFiles()" data-i18n="diffBtn">Compare</button>
+                <div id="diffResult" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Batch -->
+        <div class="tab-content" id="tab-batch">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>📦 <span data-i18n="batchTitle">Batch Processing</span></h3>
+                <p data-i18n="batchDesc">Process all Excel/CSV files in a folder at once.</p>
+                <div class="input-group">
+                    <label data-i18n="batchFolderLabel">Folder Path (Windows)</label>
+                    <input type="text" id="batchFolder" placeholder="C:\Users\DICT\Desktop\RULES\sample data">
+                </div>
+                <button class="btn-sm btn-primary" onclick="batchProcess()" data-i18n="batchBtn">Process All</button>
+                <div id="batchResult" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Quality -->
+        <div class="tab-content" id="tab-quality">
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>📈 <span data-i18n="trendTitle">Quality Trends</span></h3>
+                    <p data-i18n="trendDesc">View quality score trends across processing runs.</p>
+                    <button class="btn-sm btn-primary" onclick="loadTrends()" data-i18n="trendBtn">Load Trends</button>
+                    <div id="trendResult" style="margin-top:1rem;"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>🔥 <span data-i18n="heatmapTitle">Error Heatmap</span></h3>
+                    <p data-i18n="heatmapDesc">See which fields have the most errors across all runs.</p>
+                    <button class="btn-sm btn-primary" onclick="loadHeatmap()" data-i18n="heatmapBtn">Generate Heatmap</button>
+                    <div id="heatmapResult" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Tools -->
+        <div class="tab-content" id="tab-tools">
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>📍 <span data-i18n="psgcTitle">PSGC Validator</span></h3>
+                    <p data-i18n="psgcDesc">Validate Philippine barangay/municipality codes.</p>
+                    <div class="input-group">
+                        <input type="text" id="psgcCode" placeholder="e.g. 140101001">
+                        <select id="psgcType" style="margin-top:0.5rem;">
+                            <option value="barangay">Barangay (9 digits)</option>
+                            <option value="municipality">Municipality (6 digits)</option>
+                        </select>
+                    </div>
+                    <button class="btn-sm btn-primary" onclick="validatePSGC()" data-i18n="psgcBtn">Validate</button>
+                    <div id="psgcResult" style="margin-top:1rem;"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>📧 <span data-i18n="emailTitle">Email/Phone Checker</span></h3>
+                    <p data-i18n="emailDesc">Verify email format or Philippine mobile number.</p>
+                    <div class="input-group">
+                        <input type="text" id="contactCheck" placeholder="email@example.com or 09171234567">
+                        <select id="contactType" style="margin-top:0.5rem;">
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                        </select>
+                    </div>
+                    <button class="btn-sm btn-primary" onclick="checkContact()" data-i18n="contactCheckBtn">Check</button>
+                    <div id="contactResult" style="margin-top:1rem;"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>🔗 <span data-i18n="webhookTitle">Webhook Notifications</span></h3>
+                    <p data-i18n="webhookDesc">Add Slack, Discord, or Teams webhooks.</p>
+                    <div class="input-group">
+                        <input type="text" id="webhookUrl" placeholder="https://hooks.slack.com/services/...">
+                        <select id="webhookProvider" style="margin-top:0.5rem;">
+                            <option value="slack">Slack</option>
+                            <option value="discord">Discord</option>
+                            <option value="teams">Teams</option>
+                            <option value="generic">Generic</option>
+                        </select>
+                        <input type="text" id="webhookName" placeholder="Name (optional)" style="margin-top:0.5rem;">
+                    </div>
+                    <button class="btn-sm btn-primary" onclick="addWebhook()" data-i18n="webhookBtn">Add Webhook</button>
+                    <div id="webhookResult" style="margin-top:1rem;"></div>
+                </div>
+                <div class="tool-card">
+                    <h3>📋 <span data-i18n="pdfTitle">PDF Audit Report</span></h3>
+                    <p data-i18n="pdfDesc">Generate an audit-ready PDF from the last run.</p>
+                    <button class="btn-sm btn-primary" onclick="generatePDF()" data-i18n="pdfBtn">Generate PDF</button>
+                    <div id="pdfResult" style="margin-top:1rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Profiles -->
+        <div class="tab-content" id="tab-profiles">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>⚙️ <span data-i18n="profileTitle">Validation Profiles</span></h3>
+                <p data-i18n="profileDesc">Save and switch between different validation rule sets.</p>
+                <div class="input-group">
+                    <input type="text" id="profileName" placeholder="Profile name">
+                    <input type="text" id="profileDesc" placeholder="Description (optional)" style="margin-top:0.5rem;">
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="btn-sm btn-primary" onclick="createProfile()" data-i18n="profileCreateBtn">Create Profile</button>
+                    <button class="btn-sm btn-outline" onclick="deactivateProfile()" data-i18n="profileDeactivateBtn">Deactivate</button>
+                </div>
+                <div id="profileList" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Plugins -->
+        <div class="tab-content" id="tab-plugins">
+            <div class="tool-card" style="max-width:600px;">
+                <h3>🧩 <span data-i18n="pluginTitle">Plugin Manager</span></h3>
+                <p data-i18n="pluginDesc">Manage third-party validators and cleaners. Drop .py files into the plugins/ folder.</p>
+                <button class="btn-sm btn-primary" onclick="loadPlugins()" data-i18n="pluginLoadBtn">Refresh Plugins</button>
+                <div id="pluginList" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>BPLS Migration Tool • 24 Features • Built for data validation and format enforcement</p>
+        </footer>
+    </div>
+
+    <script>
+/* ===== State ===== */
+let selectedFile = null;
+let currentLang = 'en';
+
+/* ===== i18n ===== */
+const i18n = {
+    en: {
+        title: "🏢 BPLS CSV Format Generator",
+        subtitle: "Validate, clean, and transform migration data for BPLS System — 24 features enabled",
+        tabUpload: "⬆️ Upload", tabTemplates: "📄 Templates", tabMapping: "🔗 Column Map",
+        tabDiff: "🔀 Compare", tabBatch: "📦 Batch", tabQuality: "📊 Quality",
+        tabTools: "🛠️ Tools", tabProfiles: "⚙️ Profiles", tabPlugins: "🧩 Plugins",
+        uploadTitle: "Upload Excel or CSV File", uploadDesc: "Drag & drop your migration data file here",
+        uploadOr: "or", browseBtn: "Browse Files", optionsTitle: "Processing Options",
+        autoCorrectLabel: "Auto-Correct", autoCorrectDesc: "Automatically fix common data issues",
+        processBtn: "Process File", processingTitle: "Processing your file...",
+        step1: "Reading file", step2: "Cleaning data", step3: "Validating",
+        step4: "Duplicate check", step5: "Generating reports",
+        completeTitle: "✅ Processing Complete!", resetBtn: "Process Another",
+        beforeAfterTitle: "🔄 Before/After Preview", generatedFilesTitle: "📥 Generated Files",
+        duplicateTitle: "🔍 Duplicate Detection Report", crossRowTitle: "⚠️ Cross-Row Validation Issues",
+        contactTitle: "📧 Email & Phone Verification", validationDetailsTitle: "📋 Validation Details by Sheet",
+        errorTitle: "Processing Error", retryBtn: "Try Again",
+        tplTitle: "Generate Excel Templates", tplDesc: "Generate blank Excel templates with headers, dropdowns, and data validation.",
+        tplSheetLabel: "Sheet (leave empty for all)", tplBtn: "Generate Template",
+        mapTitle: "Column Mapping Wizard", mapDesc: "Paste your source column names to auto-detect BPLS field mappings.",
+        mapColumnsLabel: "Source Columns (one per line)", mapSheetLabel: "Target Sheet", mapBtn: "Detect Mapping",
+        diffTitle: "Compare Two Files", diffDesc: "Upload two migration files to see what changed.",
+        diffBtn: "Compare",
+        batchTitle: "Batch Processing", batchDesc: "Process all Excel/CSV files in a folder.",
+        batchFolderLabel: "Folder Path", batchBtn: "Process All",
+        trendTitle: "Quality Trends", trendDesc: "View quality score trends.",
+        trendBtn: "Load Trends",
+        heatmapTitle: "Error Heatmap", heatmapDesc: "See which fields have the most errors.",
+        heatmapBtn: "Generate Heatmap",
+        psgcTitle: "PSGC Validator", psgcDesc: "Validate Philippine barangay/municipality codes.",
+        psgcBtn: "Validate",
+        emailTitle: "Email/Phone Checker", emailDesc: "Verify email format or Philippine mobile number.",
+        contactCheckBtn: "Check",
+        webhookTitle: "Webhook Notifications", webhookDesc: "Add Slack, Discord, or Teams webhooks.",
+        webhookBtn: "Add Webhook",
+        pdfTitle: "PDF Audit Report", pdfDesc: "Generate an audit-ready PDF from the last run.",
+        pdfBtn: "Generate PDF",
+        profileTitle: "Validation Profiles", profileDesc: "Save and switch between validation rule sets.",
+        profileCreateBtn: "Create Profile", profileDeactivateBtn: "Deactivate",
+        pluginTitle: "Plugin Manager", pluginDesc: "Manage third-party validators and cleaners.",
+        pluginLoadBtn: "Refresh Plugins",
+    },
+    fil: {
+        title: "🏢 BPLS CSV Format Generator",
+        subtitle: "I-validate, linisin, at i-transform ang migration data para sa BPLS System — 24 na features",
+        tabUpload: "⬆️ Upload", tabTemplates: "📄 Templates", tabMapping: "🔗 Column Map",
+        tabDiff: "🔀 Compare", tabBatch: "📦 Batch", tabQuality: "📊 Quality",
+        tabTools: "🛠️ Tools", tabProfiles: "⚙️ Profiles", tabPlugins: "🧩 Plugins",
+        uploadTitle: "Mag-upload ng Excel o CSV File", uploadDesc: "I-drag at i-drop ang iyong migration data file dito",
+        uploadOr: "o", browseBtn: "Browse Files", optionsTitle: "Processing Options",
+        autoCorrectLabel: "Auto-Correct", autoCorrectDesc: "Awtomatikong ayusin ang karaniwang data issues",
+        processBtn: "Process File", processingTitle: "Pinoproseso ang iyong file...",
+        step1: "Binabasa ang file", step2: "Nililinis ang data", step3: "Vina-validate",
+        step4: "Duplicate check", step5: "Gumagawa ng reports",
+        completeTitle: "✅ Tapos na!", resetBtn: "Mag-process ulit",
+        beforeAfterTitle: "🔄 Bago/Selebrado na Preview", generatedFilesTitle: "📥 Mga Generated Files",
+        duplicateTitle: "🔍 Duplicate Detection Report", crossRowTitle: "⚠️ Cross-Row Validation Issues",
+        contactTitle: "📧 Email & Phone Verification", validationDetailsTitle: "📋 Validation Details by Sheet",
+        errorTitle: "Processing Error", retryBtn: "Subukan ulit",
+        tplTitle: "Gumawa ng Excel Templates", tplDesc: "Gumawa ng blangkong Excel templates na may headers at dropdowns.",
+        tplSheetLabel: "Sheet (leave empty para sa lahat)", tplBtn: "Gumawa ng Template",
+        mapTitle: "Column Mapping Wizard", mapDesc: "I-paste ang iyong source column names para ma-detect ang mappings.",
+        mapColumnsLabel: "Source Columns (isa bawat line)", mapSheetLabel: "Target Sheet", mapBtn: "Detect Mapping",
+        diffTitle: "Ihambing ang Dalawang Files", diffDesc: "Mag-upload ng dalawang files para makita ang pagbabago.",
+        diffBtn: "Ihambing",
+        batchTitle: "Batch Processing", batchDesc: "I-process ang lahat ng Excel/CSV files sa isang folder.",
+        batchFolderLabel: "Folder Path", batchBtn: "Process All",
+        trendTitle: "Quality Trends", trendDesc: "Tingnan ang quality score trends.",
+        trendBtn: "Load Trends",
+        heatmapTitle: "Error Heatmap", heatmapDesc: "Tingnan kung aling fields ang pinaka-maraming errors.",
+        heatmapBtn: "Generate Heatmap",
+        psgcTitle: "PSGC Validator", psgcDesc: "I-validate ang Philippine barangay/municipality codes.",
+        psgcBtn: "Validate",
+        emailTitle: "Email/Phone Checker", emailDesc: "I-verify ang email format o Philippine mobile number.",
+        contactCheckBtn: "Check",
+        webhookTitle: "Webhook Notifications", webhookDesc: "Magdagdag ng Slack, Discord, o Teams webhooks.",
+        webhookBtn: "Add Webhook",
+        pdfTitle: "PDF Audit Report", pdfDesc: "Gumawa ng audit-ready PDF mula sa huling run.",
+        pdfBtn: "Generate PDF",
+        profileTitle: "Validation Profiles", profileDesc: "I-save at magpalit ng validation rule sets.",
+        profileCreateBtn: "Gumawa ng Profile", profileDeactivateBtn: "Deactivate",
+        pluginTitle: "Plugin Manager", pluginDesc: "I-manage ang third-party validators at cleaners.",
+        pluginLoadBtn: "Refresh Plugins",
+    }
+};
+
+function setLanguage(lang) {
+    currentLang = lang;
+    const dict = i18n[lang] || i18n.en;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+}
+
+/* ===== Dark Mode ===== */
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('themeToggle').textContent = isDark ? '🌙' : '☀️';
+    localStorage.setItem('bpls-theme', isDark ? 'light' : 'dark');
+}
+
+/* Init theme */
+(function() {
+    const saved = localStorage.getItem('bpls-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('themeToggle').textContent = saved === 'dark' ? '☀️' : '🌙';
+})();
+
+/* ===== Tab Navigation ===== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+/* ===== Language ===== */
+document.getElementById('langSelect').addEventListener('change', e => setLanguage(e.target.value));
+
+/* ===== Theme Toggle ===== */
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+/* ===== File Upload ===== */
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const processBtn = document.getElementById('processBtn');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+        selectedFile = e.dataTransfer.files[0];
+        fileInput.files = e.dataTransfer.files;
+        processBtn.disabled = false;
+        dropZone.querySelector('h2').textContent = '📎 ' + selectedFile.name;
+    }
+});
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+        selectedFile = fileInput.files[0];
+        processBtn.disabled = false;
+        dropZone.querySelector('h2').textContent = '📎 ' + selectedFile.name;
+    }
+});
+
+/* ===== Process File ===== */
+processBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    const autoCorrect = document.getElementById('autoCorrect').checked;
+
+    document.getElementById('progressSection').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('errorSection').style.display = 'none';
+
+    // Animate steps
+    const steps = document.querySelectorAll('.progress-step');
+    steps.forEach((s, i) => { s.classList.remove('active', 'done'); });
+    let stepIdx = 0;
+    const stepInterval = setInterval(() => {
+        if (stepIdx > 0) steps[stepIdx - 1].classList.replace('active', 'done');
+        if (stepIdx < steps.length) steps[stepIdx].classList.add('active');
+        stepIdx++;
+        if (stepIdx >= steps.length) clearInterval(stepInterval);
+    }, 800);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('auto_correct', autoCorrect);
+
+    try {
+        const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        clearInterval(stepInterval);
+        steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+
+        if (data.success) {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            renderResults(data);
+        } else {
+            showError(data.error || 'Unknown error');
+        }
+    } catch (err) {
+        clearInterval(stepInterval);
+        showError(err.message);
+    }
+});
+
+function renderResults(data) {
+    const s = data.summary;
+    const totalRows = Object.values(s.sheets || {}).reduce((a, b) => a + (b.total_rows || 0), 0);
+    const totalErrors = Object.values(s.sheets || {}).reduce((a, b) => a + (b.total_errors || 0), 0);
+    const totalCorrections = Object.values(s.sheets || {}).reduce((a, b) => a + (b.total_corrections || 0), 0);
+    const sheetsProcessed = Object.keys(s.sheets || {}).length;
+
+    document.getElementById('summaryStats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${totalRows}</div><div class="stat-label">Total Rows</div></div>
+        <div class="stat-card"><div class="stat-value">${sheetsProcessed}</div><div class="stat-label">Sheets</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--error)">${totalErrors}</div><div class="stat-label">Errors</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--warning)">${totalCorrections}</div><div class="stat-label">Auto-Corrected</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--info)">${data.processing_time_ms || 0}ms</div><div class="stat-label">Processing Time</div></div>
+    `;
+
+    // Before/After Preview
+    if (s.transformations && s.transformations.length > 0) {
+        let baHtml = '<table class="before-after"><tr><th>Sheet</th><th>Row</th><th>Field</th><th>Original</th><th>Cleaned</th></tr>';
+        s.transformations.slice(0, 50).forEach(t => {
+            baHtml += `<tr><td>${t.sheet}</td><td>${t.row}</td><td>${t.field}</td><td class="original">${t.original_value}</td><td class="cleaned">${t.corrected_value}</td></tr>`;
+        });
+        baHtml += '</table>';
+        document.getElementById('beforeAfterContent').innerHTML = baHtml;
+    }
+
+    // Files
+    let filesHtml = '';
+    (data.files || []).filter(f => f.name.endsWith('.csv') || f.name.endsWith('.json') || f.name.endsWith('.html') || f.name.endsWith('.pdf')).forEach(f => {
+        const size = (f.size / 1024).toFixed(1);
+        filesHtml += `<div class="file-item"><span>📄 ${f.name}</span><span><a href="${f.url}">Download</a> <span class="file-size">(${size} KB)</span></span></div>`;
+    });
+    document.getElementById('fileList').innerHTML = filesHtml;
+
+    // Duplicates
+    const dups = data.duplicates;
+    if (dups && dups.total_duplicates > 0) {
+        document.getElementById('duplicateDetails').style.display = 'block';
+        let dupHtml = `<p><strong>${dups.total_duplicates} duplicates found</strong></p><table><tr><th>Sheet</th><th>Field</th><th>Value</th><th>Rows</th></tr>`;
+        (dups.records || []).slice(0, 20).forEach(r => {
+            dupHtml += `<tr><td>${r.sheet}</td><td>${r.field}</td><td>${r.value}</td><td>${r.row_numbers.join(', ')}</td></tr>`;
+        });
+        dupHtml += '</table>';
+        document.getElementById('duplicateContent').innerHTML = dupHtml;
+    }
+
+    // Cross-Row
+    const crossRow = data.cross_row_issues;
+    if (crossRow && crossRow.length > 0) {
+        document.getElementById('crossRowDetails').style.display = 'block';
+        let crHtml = `<p><strong>${crossRow.length} issues found</strong></p><table><tr><th>Sheet</th><th>Type</th><th>Description</th></tr>`;
+        crossRow.slice(0, 20).forEach(i => {
+            const badge = i.severity === 'ERROR' ? 'badge-red' : 'badge-amber';
+            crHtml += `<tr><td>${i.sheet}</td><td><span class="badge ${badge}">${i.type}</span></td><td>${i.description}</td></tr>`;
+        });
+        crHtml += '</table>';
+        document.getElementById('crossRowContent').innerHTML = crHtml;
+    }
+
+    // Email/Phone
+    const emails = data.email_issues;
+    const phones = data.phone_issues;
+    if ((emails && emails.length > 0) || (phones && phones.length > 0)) {
+        document.getElementById('contactDetails').style.display = 'block';
+        let cHtml = '';
+        if (emails && emails.length > 0) {
+            cHtml += '<h4 style="margin-bottom:0.5rem;">📧 Email Issues (' + emails.length + ')</h4><table><tr><th>Email</th><th>Valid</th><th>Disposable</th><th>Suggestion</th></tr>';
+            emails.slice(0, 20).forEach(e => {
+                cHtml += `<tr><td>${e.email}</td><td><span class="badge ${e.valid ? 'badge-green' : 'badge-red'}">${e.valid ? 'Yes' : 'No'}</span></td><td>${e.disposable ? '⚠️' : '—'}</td><td>${e.suggestion}</td></tr>`;
+            });
+            cHtml += '</table>';
+        }
+        if (phones && phones.length > 0) {
+            cHtml += '<h4 style="margin:1rem 0 0.5rem;">📱 Phone Issues (' + phones.length + ')</h4><table><tr><th>Phone</th><th>Valid</th><th>Carrier</th><th>Formatted</th></tr>';
+            phones.slice(0, 20).forEach(p => {
+                cHtml += `<tr><td>${p.phone}</td><td><span class="badge ${p.valid ? 'badge-green' : 'badge-red'}">${p.valid ? 'Yes' : 'No'}</span></td><td>${p.carrier || '—'}</td><td>${p.formatted || '—'}</td></tr>`;
+            });
+            cHtml += '</table>';
+        }
+        document.getElementById('contactContent').innerHTML = cHtml;
+    }
+
+    // Sheet details
+    let sheetHtml = '';
+    if (data.quality_scores) {
+        Object.entries(data.quality_scores).forEach(([name, score]) => {
+            sheetHtml += `<div style="background:var(--bg-primary); padding:1rem; border-radius:8px; margin-bottom:0.5rem;">
+                <strong>${name}</strong> — Quality: <span style="color:${score.quality_score >= 90 ? 'var(--success)' : score.quality_score >= 70 ? 'var(--warning)' : 'var(--error)'}">${score.quality_score}%</span>
+                <span style="margin-left:1rem;">Rows: ${score.total_rows}</span>
+                <span style="margin-left:1rem;">Errors: ${score.failed_checks}</span>
+                <span style="margin-left:1rem;">Corrected: ${score.auto_corrected}</span>
+            </div>`;
+        });
+    }
+    document.getElementById('sheetResults').innerHTML = sheetHtml;
+}
+
+function showError(msg) {
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('errorSection').style.display = 'block';
+    document.getElementById('errorMessage').textContent = msg;
+}
+
+/* ===== Reset ===== */
+document.getElementById('resetBtn').addEventListener('click', () => {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('errorSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'none';
+    selectedFile = null;
+    fileInput.value = '';
+    processBtn.disabled = true;
+    dropZone.querySelector('h2').textContent = 'Upload Excel or CSV File';
+});
+document.getElementById('retryBtn').addEventListener('click', () => {
+    document.getElementById('errorSection').style.display = 'none';
+});
+
+/* ===== Tool Functions ===== */
+async function apiCall(url, body, method = 'POST') {
+    try {
+        const opts = { method, headers: {'Content-Type': 'application/json'} };
+        if (body) opts.body = JSON.stringify(body);
+        const resp = await fetch(url, opts);
+        return await resp.json();
+    } catch(e) { return { success: false, error: e.message }; }
+}
+
+function renderResult(containerId, data) {
+    const el = document.getElementById(containerId);
+    if (data.success) {
+        let html = '';
+        if (data.files) {
+            html = data.files.map(f => `<div class="file-item"><a href="${f.url}">📄 ${f.name}</a></div>`).join('');
+        }
+        if (data.report) {
+            html += '<pre style="background:var(--bg-primary); padding:0.75rem; border-radius:8px; font-size:0.8rem; overflow:auto; max-height:300px;">' + JSON.stringify(data.report, null, 2) + '</pre>';
+        }
+        if (data.url) {
+            html = `<div class="file-item"><a href="${data.url}">📄 Download</a></div>`;
+        }
+        if (data.mapping) {
+            html = '<table><tr><th>Source Column</th><th>→ Target Field</th></tr>';
+            Object.entries(data.mapping).forEach(([src, tgt]) => {
+                html += `<tr><td>${src}</td><td><strong>${tgt}</strong></td></tr>`;
+            });
+            html += '</table>';
+        }
+        el.innerHTML = html;
+    } else {
+        el.innerHTML = `<p style="color:var(--error);">❌ ${data.error}</p>`;
+    }
+}
+
+/* Templates */
+function generateTemplates() {
+    const sheet = document.getElementById('tplSheet').value;
+    apiCall('/api/templates/generate', { sheet_name: sheet || undefined }).then(r => renderResult('tplResult', r));
+}
+
+/* Column Mapping */
+function detectMapping() {
+    const columns = document.getElementById('mapColumns').value.split('\n').filter(l => l.trim());
+    const targetSheet = document.getElementById('mapSheet').value;
+    apiCall('/api/mapping/detect', { columns, target_sheet: targetSheet }).then(r => renderResult('mapResult', r));
+}
+
+/* Diff */
+async function compareFiles() {
+    const fileA = document.getElementById('diffFileA').files[0];
+    const fileB = document.getElementById('diffFileB').files[0];
+    if (!fileA || !fileB) { document.getElementById('diffResult').innerHTML = '<p style="color:var(--error)">Both files required</p>'; return; }
+    const fd = new FormData();
+    fd.append('file_a', fileA);
+    fd.append('file_b', fileB);
+    try {
+        const resp = await fetch('/api/diff/compare', { method: 'POST', body: fd });
+        const data = await resp.json();
+        const el = document.getElementById('diffResult');
+        if (data.success) {
+            el.innerHTML = `<p><strong>${data.report.summary.total_changes} changes</strong> across ${Object.keys(data.report.summary.sheet_stats || {}).length} sheets</p><pre style="background:var(--bg-primary); padding:0.75rem; border-radius:8px; font-size:0.8rem; overflow:auto; max-height:300px;">${JSON.stringify(data.report.summary.sheet_stats, null, 2)}</pre>`;
+        } else {
+            el.innerHTML = `<p style="color:var(--error)">❌ ${data.error}</p>`;
+        }
+    } catch(e) { document.getElementById('diffResult').innerHTML = `<p style="color:var(--error)">❌ ${e.message}</p>`; }
+}
+
+/* Batch */
+function batchProcess() {
+    const folder = document.getElementById('batchFolder').value;
+    if (!folder) { document.getElementById('batchResult').innerHTML = '<p style="color:var(--error)">Folder path required</p>'; return; }
+    apiCall('/api/batch/process', { folder_path: folder }).then(r => {
+        const el = document.getElementById('batchResult');
+        if (r.success) {
+            el.innerHTML = `<p>Processed ${r.report.total_files} files: ${r.report.successful} successful, ${r.report.failed} failed</p><a href="${r.report_url}" class="btn-sm btn-outline">View Report</a>`;
+        } else {
+            el.innerHTML = `<p style="color:var(--error)">❌ ${r.error}</p>`;
+        }
+    });
+}
+
+/* Quality Trends */
+function loadTrends() {
+    fetch('/api/quality/trends').then(r => r.json()).then(r => {
+        const el = document.getElementById('trendResult');
+        if (r.success && r.trends.runs) {
+            el.innerHTML = `<p>Avg Quality: <strong>${r.trends.averages.avg_quality_score}%</strong> | Avg Errors: <strong>${r.trends.averages.avg_errors}</strong> | Trend: <strong>${r.trends.trend_direction.trend}</strong></p>`;
+        } else {
+            el.innerHTML = '<p style="color:var(--text-muted)">No data available</p>';
+        }
+    });
+}
+
+function loadHeatmap() {
+    fetch('/api/heatmap/generate').then(r => r.json()).then(r => {
+        const el = document.getElementById('heatmapResult');
+        if (r.success) {
+            el.innerHTML = `<a href="${r.url}" class="btn-sm btn-outline">🔥 View Heatmap</a>`;
+        }
+    });
+}
+
+/* PSGC */
+function validatePSGC() {
+    const code = document.getElementById('psgcCode').value;
+    const type = document.getElementById('psgcType').value;
+    apiCall('/api/psgc/validate', { code, type }).then(r => {
+        const el = document.getElementById('psgcResult');
+        if (r.success && r.result) {
+            const res = r.result;
+            el.innerHTML = `<p><span class="badge ${res.is_valid ? 'badge-green' : 'badge-red'}">${res.is_valid ? 'Valid' : 'Invalid'}</span></p>
+            <p>Region: ${res.region || '—'}</p><p>Municipality: ${res.municipality || '—'}</p><p>Barangay: ${res.barangay || '—'}</p>`;
+        } else {
+            el.innerHTML = `<p style="color:var(--error)">❌ ${r.error}</p>`;
+        }
+    });
+}
+
+/* Email/Phone Check */
+function checkContact() {
+    const value = document.getElementById('contactCheck').value;
+    const type = document.getElementById('contactType').value;
+    const el = document.getElementById('contactResult');
+    if (!value) { el.innerHTML = '<p style="color:var(--error)">Enter a value</p>'; return; }
+    if (type === 'email') {
+        const result = validateEmailBasic(value);
+        el.innerHTML = `<p><span class="badge ${result.valid ? 'badge-green' : 'badge-red'}">${result.valid ? 'Valid' : 'Invalid'}</span></p><p>${result.message}</p>`;
+    } else {
+        const cleaned = value.replace(/[\s\-\(\)]/g, '');
+        const normalized = cleaned.startsWith('09') ? '63' + cleaned.slice(1) : cleaned;
+        const valid = /^639\d{9}$/.test(normalized);
+        const carriers = {"917":"Globe","905":"Globe","915":"Globe","900":"Smart","909":"Smart","919":"Smart","920":"Smart","999":"Smart","895":"DITO","896":"DITO"};
+        const carrier = carriers[normalized.slice(2,5)] || 'Unknown';
+        el.innerHTML = `<p><span class="badge ${valid ? 'badge-green' : 'badge-red'}">${valid ? 'Valid' : 'Invalid'}</span></p><p>Carrier: ${carrier}</p><p>Formatted: ${normalized.slice(0,2)} ${normalized.slice(2,5)} ${normalized.slice(5,8)} ${normalized.slice(8)}</p>`;
+    }
+}
+
+function validateEmailBasic(email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { valid: false, message: 'Invalid email format' };
+    const disposable = ['tempmail.com','mailinator.com','yopmail.com'];
+    const domain = email.split('@')[1];
+    if (disposable.includes(domain)) return { valid: true, message: 'Valid format but disposable domain' };
+    return { valid: true, message: 'Valid email format' };
+}
+
+/* Webhook */
+function addWebhook() {
+    const url = document.getElementById('webhookUrl').value;
+    const provider = document.getElementById('webhookProvider').value;
+    const name = document.getElementById('webhookName').value;
+    if (!url) { document.getElementById('webhookResult').innerHTML = '<p style="color:var(--error)">URL required</p>'; return; }
+    apiCall('/api/webhooks', { url, provider, name }).then(r => {
+        document.getElementById('webhookResult').innerHTML = r.success ? '<p style="color:var(--success)">✅ Webhook added</p>' : `<p style="color:var(--error)">❌ ${r.error}</p>`;
+    });
+}
+
+/* PDF */
+function generatePDF() {
+    apiCall('/api/reports/pdf', { filename: 'bpls_audit_report' }).then(r => {
+        const el = document.getElementById('pdfResult');
+        if (r.success) {
+            el.innerHTML = `<a href="${r.url}" class="btn-sm btn-outline">📋 Download PDF Report</a>`;
+        } else {
+            el.innerHTML = `<p style="color:var(--error)">❌ ${r.error}</p>`;
+        }
+    });
+}
+
+/* Profiles */
+function createProfile() {
+    const name = document.getElementById('profileName').value;
+    const desc = document.getElementById('profileDesc').value;
+    if (!name) { return; }
+    apiCall('/api/profiles', { name, description: desc }).then(r => loadProfiles());
+}
+
+function deactivateProfile() {
+    apiCall('/api/profiles/deactivate', {}).then(r => loadProfiles());
+}
+
+function loadProfiles() {
+    fetch('/api/profiles').then(r => r.json()).then(r => {
+        const el = document.getElementById('profileList');
+        if (r.success) {
+            let html = '';
+            r.profiles.forEach(p => {
+                const activeBadge = p.is_active ? '<span class="badge badge-green">Active</span>' : '';
+                html += `<div class="file-item"><span>${p.name} ${activeBadge}</span><button class="btn-sm btn-outline" onclick="activateProfile('${p.name}')">Activate</button></div>`;
+            });
+            el.innerHTML = html || '<p style="color:var(--text-muted)">No profiles created</p>';
+        }
+    });
+}
+
+function activateProfile(name) {
+    apiCall('/api/profiles/activate', { name }).then(r => loadProfiles());
+}
+
+/* Plugins */
+function loadPlugins() {
+    fetch('/api/plugins').then(r => r.json()).then(r => {
+        const el = document.getElementById('pluginList');
+        if (r.success) {
+            let html = '';
+            r.plugins.forEach(p => {
+                html += `<div class="file-item"><span>${p.name} v${p.version} — ${p.description}</span><span class="badge ${p.enabled ? 'badge-green' : 'badge-red'}">${p.enabled ? 'On' : 'Off'}</span></div>`;
+            });
+            el.innerHTML = html || '<p style="color:var(--text-muted)">No plugins found. Drop .py files into the plugins/ folder.</p>';
+        }
+    });
+}
+
+/* ===== Init ===== */
+loadProfiles();
+loadPlugins();
+    </script>
+</body>
+</html>

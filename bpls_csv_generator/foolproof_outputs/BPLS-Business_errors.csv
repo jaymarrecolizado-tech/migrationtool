@@ -1,0 +1,51 @@
+﻿field,row,status,severity,message,original_value,corrected_value,suggestion
+dti_no,2,FAIL,ERROR,Field 'dti_no' is required but empty,,,
+dti_registration_expiry_date,2,FAIL,ERROR,Field 'dti_registration_expiry_date' is required but empty,,,
+cda_no,2,FAIL,ERROR,Field 'cda_no' is required but empty,,,
+incharge_extension_name,2,FAIL,ERROR,String length 2 is less than minimum 3,JR,,Ensure value has at least 3 characters
+pin_no,2,FAIL,ERROR,Field 'pin_no' is required but empty,,,
+lessor_name,2,FAIL,ERROR,Field 'lessor_name' is required but empty,,,
+monthly_rental,2,FAIL,ERROR,Field 'monthly_rental' is required but empty,,,
+trade_name,3,FAIL,ERROR,Field 'trade_name' is required but empty,,,
+dti_no,3,FAIL,ERROR,Field 'dti_no' is required but empty,,,
+dti_registration_expiry_date,3,FAIL,ERROR,Field 'dti_registration_expiry_date' is required but empty,,,
+sec_no,3,FAIL,ERROR,Field 'sec_no' is required but empty,,,
+cda_no,3,FAIL,ERROR,Field 'cda_no' is required but empty,,,
+tin_no,3,FAIL,ERROR,Field 'tin_no' is required but empty,,,
+telephone_no,3,FAIL,ERROR,Field 'telephone_no' is required but empty,,,
+incharge_extension_name,3,FAIL,ERROR,Field 'incharge_extension_name' is required but empty,,,
+tdn_no,3,FAIL,ERROR,Field 'tdn_no' is required but empty,,,
+pin_no,3,FAIL,ERROR,Field 'pin_no' is required but empty,,,
+dti_no,3,FAIL,ERROR,Field 'dti_no' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_no'
+dti_registration_expiry_date,3,FAIL,ERROR,Field 'dti_registration_expiry_date' is required when business_type = SOLE PROPRIETORSHIP,,,Provide a value for 'dti_registration_expiry_date'
+trade_name,4,FAIL,ERROR,Field 'trade_name' is required but empty,,,
+business_type,4,FAIL,ERROR,"Invalid value 'INVALID TYPE'. Must be one of: SOLE PROPRIETORSHIP, ONE PERSON CORPORATION, PARTNERSHIP, CORPORATION, COOPERATIVE",INVALID TYPE,,"Allowed values: SOLE PROPRIETORSHIP, ONE PERSON CORPORATION, PARTNERSHIP, CORPORATION, COOPERATIVE"
+dti_no,4,FAIL,ERROR,Field 'dti_no' is required but empty,,,
+dti_registration_expiry_date,4,FAIL,ERROR,Field 'dti_registration_expiry_date' is required but empty,,,
+sec_no,4,FAIL,ERROR,Field 'sec_no' is required but empty,,,
+cda_no,4,FAIL,ERROR,Field 'cda_no' is required but empty,,,
+tin_no,4,FAIL,ERROR,Field 'tin_no' is required but empty,,,
+email_address,4,FAIL,ERROR,Invalid email format: 'invalid-email',invalid-email,,Use format: user@example.com
+cellphone_no,4,FAIL,ERROR,Phone must start with '639': '12345',12345,,Format: 639XXXXXXXXX
+telephone_no,4,FAIL,ERROR,Field 'telephone_no' is required but empty,,,
+incharge_middle_name,4,FAIL,ERROR,Field 'incharge_middle_name' is required but empty,,,
+incharge_extension_name,4,FAIL,ERROR,Field 'incharge_extension_name' is required but empty,,,
+incharge_sex,4,FAIL,ERROR,"Invalid value 'X'. Must be one of: M, F",X,,"Allowed values: M, F"
+incharge_street,4,FAIL,ERROR,Field 'incharge_street' is required but empty,,,
+office_street,4,FAIL,ERROR,Field 'office_street' is required but empty,,,
+tdn_no,4,FAIL,ERROR,Field 'tdn_no' is required but empty,,,
+pin_no,4,FAIL,ERROR,Field 'pin_no' is required but empty,,,
+lessor_name,4,FAIL,ERROR,Field 'lessor_name' is required but empty,,,
+monthly_rental,4,FAIL,ERROR,Field 'monthly_rental' is required but empty,,,
+area,4,FAIL,ERROR,Value -10.0 is less than minimum 0,-10.0,,Value must be >= 0
+no_of_male_employees,4,FAIL,ERROR,Value -5.0 is less than minimum 0,-5.0,,Value must be >= 0
+tdn_no,4,FAIL,ERROR,Field 'tdn_no' is required when location_owned = 1,,,Provide a value for 'tdn_no'
+pin_no,4,FAIL,ERROR,Field 'pin_no' is required when location_owned = 1,,,Provide a value for 'pin_no'
+dti_no,5,FAIL,ERROR,Field 'dti_no' is required but empty,,,
+dti_registration_expiry_date,5,FAIL,ERROR,Field 'dti_registration_expiry_date' is required but empty,,,
+sec_no,5,FAIL,ERROR,Field 'sec_no' is required but empty,,,
+tin_no,5,FAIL,ERROR,Field 'tin_no' is required but empty,,,
+telephone_no,5,FAIL,ERROR,Field 'telephone_no' is required but empty,,,
+incharge_extension_name,5,FAIL,ERROR,Field 'incharge_extension_name' is required but empty,,,
+lessor_name,5,FAIL,ERROR,Field 'lessor_name' is required but empty,,,
+monthly_rental,5,FAIL,ERROR,Field 'monthly_rental' is required but empty,,,

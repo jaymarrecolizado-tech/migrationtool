@@ -1,0 +1,41 @@
+"BPLS - Business Activity
+as of 29 September 2025",,,,
+BPLS ,,,,
+FIELD,REQUIRED?,GUIDE,FORMAT/ VALIDATION,SAMPLE INPUT
+bin,Yes,"This refers to the business identification number which uniquely identifies the business.
+
+Must be existing in the Business Sheet","Numbers only.
+
+format: PSGC (7digits) - YEAR OF FIRST REGISTRATION (4digits) - INCREMENT (7digits)
+
+0000000 - 0000 - 0000000",1400101-2024-0000001
+business_line_code,Yes,"Code of the business line of the activity.
+
+Must be existing in the system. Please refer to the business nature sheet used during system setup.",Must exist in business line in Core.,47219
+capital_amount,YES,Capital amount of the business line during its new registration ,"Number only.
+
+(Must not be null/blank, please input ""0"" if not applicable)",300000
+gross_amount,YES,"If 50% essential is activated:
+Total gross amount during the renewal of the business activity (gross essential + gross nonessential)
+
+If 50% essential is not activated:
+Total gross amount of previous year (no need for gross essential and non-essential)","Number only.
+
+(Must not be null/blank, please input ""0"" if not applicable)",10000
+gross_amount_essential,YES,"Essential gross amount of the business activity (if applicable)
+
+For those whose 50% essential is activated in the tax revenue setup.","Number only.
+
+(Must not be null/blank, please input ""0"" if not applicable)",50000
+gross_amount_nonessential,YES,"Nonessential gross amount of the business activity (if applicable)
+
+For those whose 50% essential is activated in the tax revenue setup.","Number only.
+
+(Must not be null/blank, please input ""0"" if not applicable)",50000
+retired_date,NO,For retired business acitvity,"Date format (MM/DD/YYYY)
+
+If date value is present, it automatically sets the business activity to Retired
+
+or
+
+(Leave blank if not applicable)",12/21/2025
